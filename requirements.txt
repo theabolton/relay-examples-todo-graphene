@@ -1,0 +1,5 @@
+# Use 'pip freeze --local --requirement requirements.txt' to preserve the comments and order!
+Django==1.11.7
+django-filter==1.1.0
+graphene==2.0
+graphene-django==2.0.0
