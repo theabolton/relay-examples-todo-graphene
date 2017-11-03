@@ -16,7 +16,7 @@ relay-examples-todo-graphene is a GraphQL_ backend server for the `Relay TodoMVC
 built using Graphene and Django.
 
 .. _GraphQL: http://graphql.org/
-.. _TodoMVC: https://github.com/relayjs/relay-examples/tree/master/todo
+.. _Relay TodoMVC: https://github.com/relayjs/relay-examples/tree/master/todo
 
 Installation
 ============
@@ -41,6 +41,38 @@ http://localhost:8000/graphql/
 and you will be able to browse the schema and submit test queries.
 
 .. _GraphiQL: https://github.com/graphql/graphiql
+
+Required Changes to the Todo Example
+====================================
+The Todo example comes configured to use express-graphql as its backend server.
+In order to use this project as the backend server instead, it is necessary to
+make some changes to the Todo example. Beginning at around line 20 of
+``server.js``, change the ``GRAPHQL_PORT`` to 8000 and comment out the four
+lines after "``Expose a GraphQL endpoint``" that start the express-graphql
+server, so that it looks like this:
+
+.. code-block:: javascript
+
+   ...
+
+   const APP_PORT = 3000;
+   const GRAPHQL_PORT = 8000;  // change this line!
+
+   // Expose a GraphQL endpoint
+   //const graphQLServer = express();
+   //graphQLServer.use('/', graphQLHTTP({schema, pretty: true, graphiql: true}));
+   //graphQLServer.listen(GRAPHQL_PORT, () => console.log(
+   //  `GraphQL Server is now running on http://localhost:${GRAPHQL_PORT}`
+
+   // Serve the Relay app
+   const compiler = webpack({
+
+   ...
+
+Now you can start the webpack development server with ``npm start``, and load
+the Todo app from:
+
+http://localhost:3000/
 
 License
 =======

@@ -122,5 +122,11 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 GRAPHENE = {
-    'SCHEMA': 'project.schema.schema'
+    'SCHEMA': 'project.schema.schema',
+    # The Todo example annoyingly asks for "first: 2147483647" instead of just omitting first, so
+    # tell Graphene to allow that many
+    'RELAY_CONNECTION_MAX_LIMIT': 2147483647,
 }
+
+# Allow queries to '/graphql' without redirecting to '/graphql/'
+APPEND_SLASH = False
