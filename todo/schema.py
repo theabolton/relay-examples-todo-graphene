@@ -25,6 +25,7 @@ import graphene
 from graphene import ObjectType, relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
+import graphql_relay
 
 from .models import TodoModel
 
@@ -62,5 +63,35 @@ class Query(object):
         return True  # no Viewer resolvers will need Viewer()
 
 
+class AddTodo(relay.ClientIDMutation):
+    # mutation AddTodoMutation($input: AddTodoInput!) {
+    #   addTodo(input: $input) {
+    #     todoEdge { __typename cursor node { complete id text } }
+    #     viewer { id totalCount }
+    #   }
+    # }
+    # example variables: input: { text: "New Item!", clientMutationId: 0 }
+
+    # This feels like some disturbed dark magic....
+    todo_edge = graphene.Field(Todo._meta.connection.Edge)
+    viewer = graphene.Field(User)
+
+    class Input:
+        text = graphene.String(required=True)
+        # client_mutation_id is supplied automatically
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **input):
+        todo = TodoModel.objects.create(text=input.get('text'), complete=False)
+        count = TodoModel.objects.count()  # ick, race condition if multi-user
+        edge = Todo._meta.connection.Edge(
+            node=todo,
+            # A graphql_relay cursor is nothing more than an index into the edge
+            # list at one particular time in the past? That's just wrong....
+            cursor=graphql_relay.connection.arrayconnection.offset_to_cursor(count - 1)
+        )
+        return AddTodo(todo_edge=edge)
+
+
 class Mutation(object):
-    pass
+    add_todo = AddTodo.Field()

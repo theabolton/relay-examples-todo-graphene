@@ -21,10 +21,12 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import traceback
 import unittest
 
 from django.test import TestCase
 import graphene
+from graphql.error import GraphQLError
 
 from project.schema import Mutation, Query
 from .models import TodoModel
@@ -279,5 +281,39 @@ class TodoTests(TestCase):
         }
         schema = graphene.Schema(query=Query)
         result = schema.execute(query)
+        self.assertIsNone(result.errors, msg=format_graphql_errors(result.errors))
+        self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
+
+
+class AddTodoTests(TestCase):
+    def test_add_todo(self):
+        query = '''
+          mutation AddTodoMutation($input: AddTodoInput!) {
+            addTodo(input: $input) {
+              todoEdge { cursor node { text } }
+              viewer { totalCount }
+            }
+          }
+        '''
+        variables = {
+            'input': {
+                'text': 'Test Todo',
+            }
+        }
+        expected = {
+            'addTodo': {
+                'todoEdge': {
+                    'cursor': 'YXJyYXljb25uZWN0aW9uOjA=',  # 'arrayconnection:0' in base64
+                    'node': {
+                        'text': 'Test Todo',
+                    }
+                },
+                'viewer': {
+                    'totalCount': 1,
+                }
+            }
+        }
+        schema = graphene.Schema(query=Query, mutation=Mutation)
+        result = schema.execute(query, variable_values=variables)
         self.assertIsNone(result.errors, msg=format_graphql_errors(result.errors))
         self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
