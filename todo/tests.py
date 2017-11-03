@@ -27,6 +27,7 @@ import unittest
 from django.test import TestCase
 import graphene
 from graphql.error import GraphQLError
+import graphql_relay
 
 from project.schema import Mutation, Query
 from .models import TodoModel
@@ -310,6 +311,38 @@ class AddTodoTests(TestCase):
                 },
                 'viewer': {
                     'totalCount': 1,
+                }
+            }
+        }
+        schema = graphene.Schema(query=Query, mutation=Mutation)
+        result = schema.execute(query, variable_values=variables)
+        self.assertIsNone(result.errors, msg=format_graphql_errors(result.errors))
+        self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
+
+class ChangeTodoStatusTests(TestCase):
+    def test_change_todo_status(self):
+        create_test_data()
+        query = '''
+          mutation ChangeTodoStatusMutation($input: ChangeTodoStatusInput!) {
+            changeTodoStatus(input: $input) {
+              todo { complete }
+              viewer { completedCount }
+            }
+          }
+        '''
+        variables = {
+            'input': {
+                'id': graphql_relay.to_global_id('Todo', 1),
+                'complete': False,
+            }
+        }
+        expected = {
+            'changeTodoStatus': {
+                'todo': {
+                    'complete': False,
+                },
+                'viewer': {
+                    'completedCount': 0,
                 }
             }
         }

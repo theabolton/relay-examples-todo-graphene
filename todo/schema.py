@@ -48,6 +48,14 @@ class User(ObjectType):
     total_count = graphene.Int()
     completed_count = graphene.Int()
 
+    instance = None # a lazily-initialized singleton for get_node()
+
+    @classmethod
+    def get_node(cls, info, id):
+        if cls.instance is None:
+            cls.instance = User()
+        return cls.instance
+
     def resolve_total_count(_, info):
         return TodoModel.objects.count()
 
@@ -93,5 +101,36 @@ class AddTodo(relay.ClientIDMutation):
         return AddTodo(todo_edge=edge)
 
 
+class ChangeTodoStatus(relay.ClientIDMutation):
+    # mutation ChangeTodoStatusMutation($input: ChangeTodoStatusInput!) {
+    #   changeTodoStatus(input: $input) {
+    #     todo { id complete }
+    #     viewer { id completedCount }
+    #   }
+    # }
+    # example variables: input: { complete: true, id: "VG9kbzoy"}
+    todo = graphene.Field(Todo)
+    viewer = graphene.Field(User)
+
+    class Input:
+        complete = graphene.Boolean(required=True)
+        id = graphene.ID(required=True)
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **input):
+        id = input.get('id')
+        complete = input.get('complete')
+        try:
+            typ, pk = graphql_relay.from_global_id(id) # may raise if improperly encoded
+            assert typ == 'Todo', 'changeTodoStatus called with type {}'.format(typ)
+            todo = TodoModel.objects.get(pk=pk) # may raise if invalid pk
+        except:
+            raise Exception("received invalid Todo id '{}'".format(id))
+        todo.complete = complete
+        todo.save()
+        return ChangeTodoStatus(todo=todo, viewer=User())
+
+
 class Mutation(object):
     add_todo = AddTodo.Field()
+    change_todo_status = ChangeTodoStatus.Field()
