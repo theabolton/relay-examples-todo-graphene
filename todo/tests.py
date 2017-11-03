@@ -319,6 +319,7 @@ class AddTodoTests(TestCase):
         self.assertIsNone(result.errors, msg=format_graphql_errors(result.errors))
         self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
 
+
 class ChangeTodoStatusTests(TestCase):
     def test_change_todo_status(self):
         create_test_data()
@@ -344,6 +345,35 @@ class ChangeTodoStatusTests(TestCase):
                 'viewer': {
                     'completedCount': 0,
                 }
+            }
+        }
+        schema = graphene.Schema(query=Query, mutation=Mutation)
+        result = schema.execute(query, variable_values=variables)
+        self.assertIsNone(result.errors, msg=format_graphql_errors(result.errors))
+        self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
+
+
+class RenameTodoTests(TestCase):
+    def test_rename_todo_(self):
+        create_test_data()
+        query = '''
+          mutation RenameTodoMutation($input: RenameTodoInput!) {
+            renameTodo(input: $input) {
+              todo { text }
+            }
+          }
+        '''
+        variables = {
+            'input': {
+                'id': graphql_relay.to_global_id('Todo', 1),
+                'text': 'Taste Python',
+            }
+        }
+        expected = {
+            'renameTodo': {
+                'todo': {
+                    'text': 'Taste Python',
+                },
             }
         }
         schema = graphene.Schema(query=Query, mutation=Mutation)

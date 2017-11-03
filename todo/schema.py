@@ -131,6 +131,35 @@ class ChangeTodoStatus(relay.ClientIDMutation):
         return ChangeTodoStatus(todo=todo, viewer=User())
 
 
+class RenameTodo(relay.ClientIDMutation):
+    # mutation RenameTodoMutation($input: RenameTodoInput!) {
+    #   renameTodo(input: $input) {
+    #     todo {  id text }
+    #   }
+    # }
+    # example variables: input: { text: "New Text", id: "VG9kbzoyOQ=="}
+    todo = graphene.Field(Todo)
+
+    class Input:
+        id = graphene.ID(required=True)
+        text = graphene.String(required=True)
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **input):
+        id = input.get('id')
+        text = input.get('text')
+        try:
+            typ, pk = graphql_relay.from_global_id(id)
+            assert typ == 'Todo', 'renameTodo called with type {}'.format(typ)
+            todo = TodoModel.objects.get(pk=pk)
+        except:
+            raise Exception("received invalid Todo id '{}'".format(id))
+        todo.text = text
+        todo.save()
+        return RenameTodo(todo=todo)
+
+
 class Mutation(object):
     add_todo = AddTodo.Field()
     change_todo_status = ChangeTodoStatus.Field()
+    rename_todo = RenameTodo.Field()
