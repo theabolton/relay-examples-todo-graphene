@@ -13,10 +13,18 @@ relay-examples-todo-graphene
    :alt: Build Status
 
 relay-examples-todo-graphene is a GraphQL_ backend server for the `Relay TodoMVC`_ example. It is
-built using Graphene and Django.
+built using Graphene_ and Django_.
 
 .. _GraphQL: http://graphql.org/
 .. _Relay TodoMVC: https://github.com/relayjs/relay-examples/tree/master/todo
+.. _Graphene: https://github.com/graphql-python/graphene
+.. _Django: https://www.djangoproject.com/
+
+There is a similar Graphene-based backend server for the Relay Todo `here <mickeyinfoshan>`_, but it
+is based (as of November 2017) on the much older Graphene 1.0 series, while this project uses
+Graphene 2.0.
+
+.. _mickeyinfoshan: https://github.com/mickeyinfoshan/graphene_todo
 
 Installation
 ============
