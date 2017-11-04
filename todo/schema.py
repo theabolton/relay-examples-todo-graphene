@@ -158,6 +158,30 @@ class MarkAllTodos(relay.ClientIDMutation):
         return MarkAllTodos(changed_todos=changed)
 
 
+class RemoveCompletedTodos(relay.ClientIDMutation):
+    # mutation RemoveCompletedTodosMutation($input: RemoveCompletedTodosInput!) {
+    #   removeCompletedTodos(input: $input) {
+    #     deletedTodoIds
+    #     viewer { completedCount totalCount id }
+    #   }
+    # }
+    # example variables: input: { }
+    deleted_todo_ids = graphene.List(graphene.String)
+    viewer = graphene.Field(User)
+
+    class Input:
+        pass
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **input):
+        # save the list of items that will be deleted
+        deleted = [graphql_relay.to_global_id('Todo', todo.pk)
+                   for todo in TodoModel.objects.filter(complete=True)]
+        # bulk delete them
+        TodoModel.objects.filter(complete=True).delete()
+        return RemoveCompletedTodos(deleted_todo_ids=deleted)
+
+
 class RemoveTodo(relay.ClientIDMutation):
     # mutation RemoveTodoMutation($input: RemoveTodoInput!) {
     #   removeTodo(input: $input) {
@@ -218,5 +242,6 @@ class Mutation(object):
     add_todo = AddTodo.Field()
     change_todo_status = ChangeTodoStatus.Field()
     mark_all_todos = MarkAllTodos.Field()
+    remove_completed_todos = RemoveCompletedTodos.Field()
     remove_todo = RemoveTodo.Field()
     rename_todo = RenameTodo.Field()
