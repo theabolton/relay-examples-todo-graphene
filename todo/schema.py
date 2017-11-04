@@ -131,6 +131,33 @@ class ChangeTodoStatus(relay.ClientIDMutation):
         return ChangeTodoStatus(todo=todo, viewer=User())
 
 
+class MarkAllTodos(relay.ClientIDMutation):
+    # mutation MarkAllTodosMutation($input: MarkAllTodosInput!) {
+    #   markAllTodos(input: $input) {
+    #     changedTodos { id complete }
+    #     viewer { id completedCount }
+    #   }
+    # }
+    # example variables: input: { complete: true }
+    changed_todos = graphene.List(Todo)
+    viewer = graphene.Field(User)
+
+    class Input:
+        complete = graphene.Boolean(required=True)
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **input):
+        complete = input.get('complete')
+        # save the list of items that will be changed
+        changed = [todo for todo in TodoModel.objects.filter(complete=not complete)]
+        # bulk change them
+        TodoModel.objects.filter(complete=not complete).update(complete=complete)
+        # refresh changed items to their new value (-FIX- these hopefully will
+        # come from cache; I haven't checked yet)
+        changed = list(map(lambda todo: TodoModel.objects.get(pk=todo.pk), changed))
+        return MarkAllTodos(changed_todos=changed)
+
+
 class RenameTodo(relay.ClientIDMutation):
     # mutation RenameTodoMutation($input: RenameTodoInput!) {
     #   renameTodo(input: $input) {
@@ -162,4 +189,5 @@ class RenameTodo(relay.ClientIDMutation):
 class Mutation(object):
     add_todo = AddTodo.Field()
     change_todo_status = ChangeTodoStatus.Field()
+    mark_all_todos = MarkAllTodos.Field()
     rename_todo = RenameTodo.Field()

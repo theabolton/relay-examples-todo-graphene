@@ -353,8 +353,43 @@ class ChangeTodoStatusTests(TestCase):
         self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
 
 
+class MarkAllTodosTests(TestCase):
+    def test_mark_all_todos(self):
+        create_test_data()
+        query = '''
+          mutation MarkAllTodosMutation($input: MarkAllTodosInput!) {
+            markAllTodos(input: $input) {
+              changedTodos { id complete }
+              viewer { completedCount }
+            }
+          }
+        '''
+        variables = {
+            'input': {
+                'complete': True,
+            }
+        }
+        expected = {
+            'markAllTodos': {
+                'changedTodos': [
+                    {
+                        'id': graphql_relay.to_global_id('Todo', 2),
+                        'complete': True,
+                    },
+                ],
+                'viewer': {
+                    'completedCount': 2,
+                }
+            }
+        }
+        schema = graphene.Schema(query=Query, mutation=Mutation)
+        result = schema.execute(query, variable_values=variables)
+        self.assertIsNone(result.errors, msg=format_graphql_errors(result.errors))
+        self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
+
+
 class RenameTodoTests(TestCase):
-    def test_rename_todo_(self):
+    def test_rename_todo(self):
         create_test_data()
         query = '''
           mutation RenameTodoMutation($input: RenameTodoInput!) {
