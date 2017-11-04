@@ -158,6 +158,34 @@ class MarkAllTodos(relay.ClientIDMutation):
         return MarkAllTodos(changed_todos=changed)
 
 
+class RemoveTodo(relay.ClientIDMutation):
+    # mutation RemoveTodoMutation($input: RemoveTodoInput!) {
+    #   removeTodo(input: $input) {
+    #     deletedTodoId
+    #     viewer { completedCount totalCount id }
+    #   }
+    # }
+    # example variables: input: { id: "VG9bzoy" }
+    deleted_todo_id = graphene.ID()
+    viewer = graphene.Field(User)
+
+    class Input:
+        id = graphene.ID(required=True)
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **input):
+        id = input.get('id')
+        try:
+            typ, pk = graphql_relay.from_global_id(id) # may raise if improperly encoded
+            assert typ == 'Todo', 'changeTodoStatus called with type {}'.format(typ)
+        except:
+            raise Exception("received invalid Todo id '{}'".format(id))
+        count, _ = TodoModel.objects.filter(pk=pk).delete()
+        if count == 0:
+            id = None
+        return RemoveTodo(deleted_todo_id=id)
+
+
 class RenameTodo(relay.ClientIDMutation):
     # mutation RenameTodoMutation($input: RenameTodoInput!) {
     #   renameTodo(input: $input) {
@@ -190,4 +218,5 @@ class Mutation(object):
     add_todo = AddTodo.Field()
     change_todo_status = ChangeTodoStatus.Field()
     mark_all_todos = MarkAllTodos.Field()
+    remove_todo = RemoveTodo.Field()
     rename_todo = RenameTodo.Field()

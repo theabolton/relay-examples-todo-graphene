@@ -388,6 +388,38 @@ class MarkAllTodosTests(TestCase):
         self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
 
 
+class RemoveTodoTests(TestCase):
+    def test_remove_todo(self):
+        create_test_data()
+        query = '''
+          mutation RemoveTodoMutation($input: RemoveTodoInput!) {
+            removeTodo(input: $input) {
+              deletedTodoId
+              viewer { completedCount totalCount }
+            }
+          }
+        '''
+        todo_gid = graphql_relay.to_global_id('Todo', 1)
+        variables = {
+            'input': {
+                'id': todo_gid,
+            }
+        }
+        expected = {
+            'removeTodo': {
+                'deletedTodoId': todo_gid,
+                'viewer': {
+                    'completedCount': 0,
+                    'totalCount': 1,
+                }
+            }
+        }
+        schema = graphene.Schema(query=Query, mutation=Mutation)
+        result = schema.execute(query, variable_values=variables)
+        self.assertIsNone(result.errors, msg=format_graphql_errors(result.errors))
+        self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
+
+
 class RenameTodoTests(TestCase):
     def test_rename_todo(self):
         create_test_data()
