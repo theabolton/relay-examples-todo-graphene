@@ -1,0 +1,18 @@
+[
+  {
+    "model": "todo.todomodel",
+    "pk": 1,
+    "fields": {
+      "text": "Taste JavaScript",
+      "complete": true
+    }
+  },
+  {
+    "model": "todo.todomodel",
+    "pk": 2,
+    "fields": {
+      "text": "Buy a unicorn",
+      "complete": false
+    }
+  }
+]
