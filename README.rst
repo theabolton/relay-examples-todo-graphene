@@ -39,6 +39,7 @@ Installation
    $ ./manage.py makemigrations
    $ ./manage.py migrate
    $ ./manage.py test  # all tests should pass
+   $ ./manage.py loaddata todos  # load some initial data
    $ ./manage.py runserver
 
 The server includes the GraphiQL_ schema-browser IDE, so once you have the server running, point
