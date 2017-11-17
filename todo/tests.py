@@ -33,6 +33,8 @@ from project.schema import Mutation, Query
 from .models import TodoModel
 
 
+# ========== utility functions ==========
+
 def format_graphql_errors(errors):
     """Return a string with the usual exception traceback, plus some extra fields that GraphQL
     provides.
@@ -56,6 +58,13 @@ def format_graphql_errors(errors):
             text.append(repr(e) + '\n')
     return ''.join(text)
 
+
+def create_test_data():
+    TodoModel.objects.create(text='Taste JavaScript', complete=True)
+    TodoModel.objects.create(text='Buy a unicorn', complete=False)
+
+
+# ========== GraphQL schema general tests ==========
 
 class RootTests(TestCase):
     def test_root_query(self):
@@ -159,10 +168,64 @@ class ViewerTests(TestCase):
         self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
 
 
-def create_test_data():
-    TodoModel.objects.create(text='Taste JavaScript', complete=True)
-    TodoModel.objects.create(text='Buy a unicorn', complete=False)
+# ========== Relay Node tests ==========
 
+class RelayNodeTests(TestCase):
+    """Test that model nodes can be retreived via the Relay Node interface."""
+    def test_node_for_todo(self):
+        todo = TodoModel.objects.create(text='Test', complete=False)
+        todo_gid = graphql_relay.to_global_id('Todo', todo.pk)
+        query = '''
+          query {
+            node(id: "%s") {
+              id
+              ...on Todo {
+                text
+              }
+            }
+          }
+        ''' % todo_gid
+        expected = {
+          'node': {
+            'id': todo_gid,
+            'text': 'Test',
+          }
+        }
+        schema = graphene.Schema(query=Query)
+        result = schema.execute(query)
+        self.assertIsNone(result.errors, msg=format_graphql_errors(result.errors))
+        self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
+
+    def test_node_for_viewer(self):
+        query = '''
+          query {
+            viewer {
+              id
+            }
+          }
+        '''
+        schema = graphene.Schema(query=Query)
+        result = schema.execute(query)
+        self.assertIsNone(result.errors, msg=format_graphql_errors(result.errors))
+        viewer_gid = result.data['viewer']['id']
+        query = '''
+          query {
+            node(id: "%s") {
+              id
+            }
+          }
+        ''' % viewer_gid
+        expected = {
+          'node': {
+            'id': viewer_gid,
+          }
+        }
+        result = schema.execute(query)
+        self.assertIsNone(result.errors, msg=format_graphql_errors(result.errors))
+        self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
+
+
+# ========== Todo query tests ==========
 
 class TodoTests(TestCase):
     def test_total_count(self):
@@ -285,6 +348,8 @@ class TodoTests(TestCase):
         self.assertIsNone(result.errors, msg=format_graphql_errors(result.errors))
         self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
 
+
+# ========== Todo mutation tests ==========
 
 class AddTodoTests(TestCase):
     def test_add_todo(self):
