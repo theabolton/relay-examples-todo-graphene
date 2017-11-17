@@ -293,12 +293,14 @@ class AddTodoTests(TestCase):
             addTodo(input: $input) {
               todoEdge { cursor node { text } }
               viewer { totalCount }
+              clientMutationId
             }
           }
         '''
         variables = {
             'input': {
                 'text': 'Test Todo',
+                'clientMutationId': 'give_this_back_to_me',
             }
         }
         expected = {
@@ -311,7 +313,8 @@ class AddTodoTests(TestCase):
                 },
                 'viewer': {
                     'totalCount': 1,
-                }
+                },
+                'clientMutationId': 'give_this_back_to_me',
             }
         }
         schema = graphene.Schema(query=Query, mutation=Mutation)
@@ -328,6 +331,7 @@ class ChangeTodoStatusTests(TestCase):
             changeTodoStatus(input: $input) {
               todo { complete }
               viewer { completedCount }
+              clientMutationId
             }
           }
         '''
@@ -335,6 +339,7 @@ class ChangeTodoStatusTests(TestCase):
             'input': {
                 'id': graphql_relay.to_global_id('Todo', 1),
                 'complete': False,
+                'clientMutationId': 'give_this_back_to_me',
             }
         }
         expected = {
@@ -344,7 +349,8 @@ class ChangeTodoStatusTests(TestCase):
                 },
                 'viewer': {
                     'completedCount': 0,
-                }
+                },
+                'clientMutationId': 'give_this_back_to_me',
             }
         }
         schema = graphene.Schema(query=Query, mutation=Mutation)
@@ -361,12 +367,14 @@ class MarkAllTodosTests(TestCase):
             markAllTodos(input: $input) {
               changedTodos { id complete }
               viewer { completedCount }
+              clientMutationId
             }
           }
         '''
         variables = {
             'input': {
                 'complete': True,
+                'clientMutationId': 'give_this_back_to_me',
             }
         }
         expected = {
@@ -379,7 +387,8 @@ class MarkAllTodosTests(TestCase):
                 ],
                 'viewer': {
                     'completedCount': 2,
-                }
+                },
+                'clientMutationId': 'give_this_back_to_me',
             }
         }
         schema = graphene.Schema(query=Query, mutation=Mutation)
@@ -396,11 +405,14 @@ class RemoveCompletedTodosTests(TestCase):
             removeCompletedTodos(input: $input) {
               deletedTodoIds
               viewer { completedCount totalCount }
+              clientMutationId
             }
           }
         '''
         variables = {
-            'input': {},
+            'input': {
+                'clientMutationId': 'give_this_back_to_me',
+            },
         }
         expected = {
             'removeCompletedTodos': {
@@ -408,7 +420,8 @@ class RemoveCompletedTodosTests(TestCase):
                 'viewer': {
                     'completedCount': 0,
                     'totalCount': 1,
-                }
+                },
+                'clientMutationId': 'give_this_back_to_me',
             }
         }
         schema = graphene.Schema(query=Query, mutation=Mutation)
@@ -425,6 +438,7 @@ class RemoveTodoTests(TestCase):
             removeTodo(input: $input) {
               deletedTodoId
               viewer { completedCount totalCount }
+              clientMutationId
             }
           }
         '''
@@ -432,6 +446,7 @@ class RemoveTodoTests(TestCase):
         variables = {
             'input': {
                 'id': todo_gid,
+                'clientMutationId': 'give_this_back_to_me',
             }
         }
         expected = {
@@ -440,7 +455,8 @@ class RemoveTodoTests(TestCase):
                 'viewer': {
                     'completedCount': 0,
                     'totalCount': 1,
-                }
+                },
+                'clientMutationId': 'give_this_back_to_me',
             }
         }
         schema = graphene.Schema(query=Query, mutation=Mutation)
@@ -456,6 +472,7 @@ class RenameTodoTests(TestCase):
           mutation RenameTodoMutation($input: RenameTodoInput!) {
             renameTodo(input: $input) {
               todo { text }
+              clientMutationId
             }
           }
         '''
@@ -463,6 +480,7 @@ class RenameTodoTests(TestCase):
             'input': {
                 'id': graphql_relay.to_global_id('Todo', 1),
                 'text': 'Taste Python',
+                'clientMutationId': 'give_this_back_to_me',
             }
         }
         expected = {
@@ -470,6 +488,7 @@ class RenameTodoTests(TestCase):
                 'todo': {
                     'text': 'Taste Python',
                 },
+                'clientMutationId': 'give_this_back_to_me',
             }
         }
         schema = graphene.Schema(query=Query, mutation=Mutation)
