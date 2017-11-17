@@ -38,13 +38,40 @@ class Todo(DjangoObjectType):
             'complete': ['exact'],
         }
         interfaces = (relay.Node, )
+        use_connection = False
+
+
+class TodoConnection(relay.Connection):
+    class Meta:
+        node = Todo
+
+    @staticmethod
+    def get_todos_input_fields():
+        """Input field for 'todos' query on User."""
+        return { 'status': graphene.String('any') }
+
+    def resolve_todos(self, info, **args):
+        """Resolver for 'todos' query on User. This has a 'status' field for filtering the Todos.
+        Because 'status' is not a standard model field name, DjangoFilterConnectionField can't be
+        used.
+        """
+        qs = TodoModel.objects.all()
+        status = args.get('status', None)
+        if status:
+            if status == 'completed':
+                qs = qs.filter(complete=True)
+        return qs
 
 
 class User(ObjectType):
     class Meta:
         interfaces = (relay.Node, )
 
-    todos = DjangoFilterConnectionField(Todo, status=graphene.String('any'))
+    todos = relay.ConnectionField(
+        TodoConnection,
+        resolver=TodoConnection.resolve_todos,
+        **TodoConnection.get_todos_input_fields()
+    )
     total_count = graphene.Int()
     completed_count = graphene.Int()
 
@@ -80,8 +107,7 @@ class AddTodo(relay.ClientIDMutation):
     # }
     # example variables: input: { text: "New Item!", clientMutationId: 0 }
 
-    # This feels like some disturbed dark magic....
-    todo_edge = graphene.Field(Todo._meta.connection.Edge)
+    todo_edge = graphene.Field(TodoConnection.Edge)
     viewer = graphene.Field(User)
 
     class Input:
@@ -92,7 +118,7 @@ class AddTodo(relay.ClientIDMutation):
     def mutate_and_get_payload(cls, root, info, **input):
         todo = TodoModel.objects.create(text=input.get('text'), complete=False)
         count = TodoModel.objects.count()  # ick, race condition if multi-user
-        edge = Todo._meta.connection.Edge(
+        edge = TodoConnection.Edge(
             node=todo,
             # A graphql_relay cursor is nothing more than an index into the edge
             # list at one particular time in the past? That's just wrong....

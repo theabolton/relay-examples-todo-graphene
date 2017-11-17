@@ -309,9 +309,6 @@ class TodoTests(TestCase):
         result.data['viewer']['todos']['edges'].sort(key=lambda d: d['node']['text'])
         self.assertEqual(result.data, expected, msg='\n'+repr(expected)+'\n'+repr(result.data))
 
-    @unittest.expectedFailure
-    # 'status' is not a field of TodoModel, so DjangoFilterConnectionField can't filter on it.
-    # Not sure how to work around that yet.
     def test_todos_filter_by_completed(self):
         """'fragment TodoListFooter_viewer on User' filters todos on 'status: "completed"' – test
         that.
